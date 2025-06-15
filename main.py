@@ -28,15 +28,6 @@ page_urls = [
 
 page_url = "https://docs.chaicode.com/youtube/getting-started/"
 
-#loader = WebBaseLoader(web_paths=[page_url])
-docs = []
-async def load_and_process_docs():
-    async for doc in loader.alazy_load():
-        docs.append(doc)
-    
-    for doc in docs[:5]:
-        print(doc.page_content)
-
 
 async def _get_setup_docs_from_url(url: str) -> List[Document]:
     loader = UnstructuredLoader(web_url=url)
@@ -62,12 +53,22 @@ async def load_and_process_docs():
     for doc in setup_docs:
         url = doc.metadata["url"]
         setup_text[url] += f"{doc.page_content}\n"
+        #print(f'{doc.metadata["url"]}: {doc.page_content}')
 
     dict(setup_text)
 
-    print(dict(setup_text))
+    while True:
+        query = input(" Search > ")
 
-    
+        while True:
+            vector_store = InMemoryVectorStore.from_documents(setup_docs, OpenAIEmbeddings())
+            retrieved_docs = vector_store.similarity_search(query, k=2)
+            for doc in retrieved_docs:
+                print(f'Page {doc.metadata["url"]}: {doc.page_content[:300]}\n')
+
+            break
+
+
 if __name__ == "__main__":
     # Run the async function
     asyncio.run(load_and_process_docs())
